@@ -4,9 +4,15 @@
 # MacOS
 .DS_Store
 
-# Pyhton
-*.pyc
-__pycache__/
+# yarn
+yarn-error.log
 
-# Environments
-.env
+# Node
+node_modules
+
+# typescript
+*.tsbuildinfo
+out
+
+# Logs
+logs

@@ -1,0 +1,29 @@
+{
+  "name": "bad-words",
+  "version": "1.0.0",
+  "description": "bad words api",
+  "main": "index.js",
+  "repository": "https://github.com/ValentinKolb/bad-words.git",
+  "author": "valentinkolb <valentin.kolb@uni-ulm.de>",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "start": "node -r tsconfig-paths/register dist/index.js",
+    "build": "tsc",
+    "dev": "nodemon"
+  },
+  "dependencies": {
+    "@2toad/profanity": "^2.2.0",
+    "bad-words-next": "^2.3.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "tsconfig-paths": "^4.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.12.11",
+    "nodemon": "^3.1.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5"
+  }
+}
