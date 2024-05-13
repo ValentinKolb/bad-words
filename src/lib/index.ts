@@ -1,5 +1,5 @@
-import {checkWithProfanity} from "@/lib/checkWithProfanity";
-import {checkWithBadWordsNext} from "@/lib/checkWithBadWordsNext";
+import {checkWithProfanity} from "./checkWithProfanity";
+import {checkWithBadWordsNext} from "./checkWithBadWordsNext";
 
 
 export const checkProfanity = (text: string) => {

@@ -1,5 +1,5 @@
 import express from 'express';
-import {checkProfanity} from "@/lib";
+import {checkProfanity} from "./lib";
 
 const app = express();
 const PORT = 3000;

@@ -5,9 +5,6 @@
     "outDir": "./dist",
     "esModuleInterop": true,
     "baseUrl": "./src",
-    "paths": {
-      "@/*": ["*"]
-    },
     "strict": true,
     "resolveJsonModule": true
   },
