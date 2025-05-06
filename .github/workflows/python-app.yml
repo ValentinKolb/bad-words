@@ -31,12 +31,15 @@ jobs:
         cache-dependency-glob: "uv.lock"
 
     - name: Install dependencies
-      run: uv sync --locked --dev
+      run: |
+        uv sync --locked --dev
+        # Verify installation
+        uv pip list
 
     - name: Run linting and formatting checks
       run: |
-        uv run ruff check .
-        uv run ruff format --check .
+        uv run -p ruff check .
+        uv run -p ruff format --check .
 
   test:
     runs-on: ubuntu-latest
@@ -55,10 +58,13 @@ jobs:
         cache-dependency-glob: "uv.lock"
 
     - name: Install dependencies
-      run: uv sync --locked --dev
+      run: |
+        uv sync --locked --dev
+        # Verify installation
+        uv pip list
 
     - name: Run tests
-      run: uv run pytest --cov=src
+      run: uv run -p pytest --cov=src
 
   build-and-push:
     runs-on: ubuntu-latest
