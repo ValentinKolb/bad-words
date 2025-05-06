@@ -18,53 +18,48 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  lint:
+  lock_file:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - name: Update lockfile if needed
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version-file: ".python-version"
+      - run: uv lock
+      
+  lint:
+    runs-on: ubuntu-latest
+    needs: [lock_file]
+    steps:
     - uses: actions/checkout@v4
-
-    - name: Install uv and set Python version
-      uses: astral-sh/setup-uv@v5
-      with:
-        python-version-file: ".python-version"
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-
-    - name: Install dependencies
-      run: |
-        uv sync --locked --dev
-        # Verify installation
-        uv pip list
+    - uses: ./.github/actions/setup
 
     - name: Run linting and formatting checks
+      shell: bash
       run: |
-        uv run -p ruff check .
-        uv run -p ruff format --check .
+        source .venv/bin/activate
+        ruff check .
+        ruff format --check .
 
   test:
     runs-on: ubuntu-latest
+    needs: [lock_file]
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11"]
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install uv and set Python version
-      uses: astral-sh/setup-uv@v5
+    - uses: ./.github/actions/setup
       with:
         python-version: ${{ matrix.python-version }}
-        enable-cache: true
-        cache-dependency-glob: "uv.lock"
-
-    - name: Install dependencies
-      run: |
-        uv sync --locked --dev
-        # Verify installation
-        uv pip list
 
     - name: Run tests
-      run: uv run -p pytest --cov=src
+      shell: bash
+      run: |
+        source .venv/bin/activate
+        pytest --cov=src
 
   build-and-push:
     runs-on: ubuntu-latest
