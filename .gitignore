@@ -1,18 +1,50 @@
-# JetBrains IDEs
-.idea
-
 # MacOS
 .DS_Store
+.idea
 
-# yarn
-yarn-error.log
+# Python
+.venv
+__pycache__/
+*/__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
 
-# Node
-node_modules
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# typescript
-*.tsbuildinfo
-out
+# Data directory for cached models
+temp/
+/temp
+*.temp
 
 # Logs
 logs
+*.log
+
+# Byte-compiled / optimized / DLL files
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/

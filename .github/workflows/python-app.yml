@@ -1,0 +1,106 @@
+name: Python Application
+
+on:
+  push:
+    branches: [ "main" ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  PYTHONUNBUFFERED: 1
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv and set Python version
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version-file: ".python-version"
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Install dependencies
+      run: uv sync --locked --dev
+
+    - name: Run linting and formatting checks
+      run: |
+        uv run ruff check .
+        uv run ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv and set Python version
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+
+    - name: Install dependencies
+      run: uv sync --locked --dev
+
+    - name: Run tests
+      run: uv run pytest --cov=src
+
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    # Skip on pull requests, only run on push to main or tags
+    if: github.event_name != 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract Docker metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern=latest,enable=${{ github.ref_type == 'tag' }}
+
+    - name: Set Docker Tag for non-tag pushes
+      if: startsWith(github.ref, 'refs/heads/')
+      run: |
+        SHA=$(git rev-parse --short HEAD)
+        echo "ADDITIONAL_TAGS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev-${SHA}" >> $GITHUB_ENV
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max

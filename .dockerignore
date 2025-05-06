@@ -1,6 +1,11 @@
 node_modules
 .gitignore
 .git
+.github
 LICENSE
 README.md
 dist
+.venv
+__pycache__
+temp
+assets

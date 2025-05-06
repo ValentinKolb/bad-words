@@ -1,0 +1,86 @@
+[project]
+name = "bad-words"
+version = "0.1.0"
+description = "Profanity detection API with FastAPI and ML"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.115.12",
+    "pydantic>=2.11.4",
+    "pydantic-settings>=2.9.1",
+    "slowapi>=0.1.9",
+    "torch>=2.7.0",
+    "transformers>=4.51.3",
+    "uvicorn>=0.34.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.3.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.2.0",
+    "httpx>=0.27.0", # For TestClient in FastAPI tests
+]
+
+[tool.ruff]
+# Assume Python 3.9
+target-version = "py39"
+
+# Allow lines to be as long as 100 characters
+line-length = 100
+
+# Exclude a variety of commonly ignored directories
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+[tool.ruff.lint]
+# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
+# See https://docs.astral.sh/ruff/rules/ for list of rules
+select = ["E", "F", "I", "N", "W", "UP", "B", "A", "C4", "PT", "RET", "SIM", "ERA"]
+ignore = [
+    # Ignore whitespace in blank lines
+    "W293",
+    # Ignore function call in defaults (used by FastAPI)
+    "B008",
+    # Ignore line too long for documentation
+    "E501",
+    # Ignore classmethod first parameter naming (Pydantic validators use cls)
+    "N805",
+]
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.lint.mccabe]
+# Flag functions with a complexity higher than 10
+max-complexity = 10
+
+[tool.ruff.format]
+# Format code with Black's style guide
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
