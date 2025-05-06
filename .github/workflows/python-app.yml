@@ -25,7 +25,7 @@ jobs:
       - name: Update lockfile if needed
         uses: astral-sh/setup-uv@v5
         with:
-          python-version-file: ".python-version"
+          python-version: "3.13"
       - run: uv lock
       
   lint:
@@ -47,7 +47,7 @@ jobs:
     needs: [lock_file]
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ["3.9", "3.10", "3.11", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
