@@ -1,10 +1,6 @@
-version: '3.8'
-
 services:
   api:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: bad-words-api
     ports:
       - "8000:8000"
     volumes:

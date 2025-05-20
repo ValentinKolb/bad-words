@@ -170,17 +170,17 @@ make clean
 
 ```bash
 # Build the image
-docker build -t bad-words .
+docker build -t bad-words-api .
 
 # Run the container
-docker run -p 8000:8000 bad-words
+docker run -p 8000:8000 bad-words-api
 
 # Run with custom environment variables
 docker run -p 8000:8000 \
   -e LOG_LEVEL=DEBUG \
   -e MAX_TEXT_LENGTH=1000 \
   -e RATE_LIMIT_DEFAULT=20/minute \
-  bad-words
+  bad-words-api
 ```
 
 ### Using Docker Compose

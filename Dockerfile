@@ -1,42 +1,33 @@
-# Build stage with UV
-FROM ghcr.io/astral-sh/uv:bookworm-slim AS builder
+# Build stage with UV using the official Python+UV image
+FROM ghcr.io/astral-sh/uv:python3.13-bookworm-slim AS builder
+
+# Configure UV environment variables
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
-
-# Configure the Python directory so it is consistent
-ENV UV_PYTHON_INSTALL_DIR=/python
-
-# Only use the managed Python version
-ENV UV_PYTHON_PREFERENCE=only-managed
-
-# Install Python before the project for caching
-RUN uv python install 3.9
+# Use system Python to avoid compatibility issues between stages
+ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
+
+# Install dependencies
 RUN --mount=type=cache,target=/root/.cache/uv \
     --mount=type=bind,source=uv.lock,target=uv.lock \
     --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    uv sync --frozen --no-install-project --no-dev
-ADD . /app
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --locked --no-install-project --no-dev
 
-# Runtime stage
-FROM debian:bookworm-slim
+# Copy application code
+COPY . /app
+
+# Install project dependencies
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
+# Runtime stage - uses matching Python version from official image
+FROM python:3.13-slim-bookworm
 
 # Install curl for healthcheck
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
-
-# Copy the Python version
-COPY --from=builder --chown=root:root /python /python
-ENV PATH="/python/bin:$PATH"
-
-# Create app user
-RUN groupadd -r app && useradd -r -g app app
-
-# Create app directory structure
-RUN mkdir -p /app/data && chown -R app:app /app
 
 # Copy the application from the builder
 COPY --from=builder --chown=app:app /app /app
@@ -44,18 +35,16 @@ COPY --from=builder --chown=app:app /app /app
 # Set working directory
 WORKDIR /app
 
-# Configure environment variables
-ENV PYTHONUNBUFFERED=1 \
+# Add .venv binaries to PATH
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/app/data
-
-# Set user
-USER app
 
 # Expose port
 EXPOSE 8000
 
-# Use entrypoint and cmd for better container flexibility
+# Use Python from PATH to run main.py
 ENTRYPOINT ["python"]
 CMD ["main.py"]
 
