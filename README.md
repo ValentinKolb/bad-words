@@ -166,7 +166,21 @@ make clean
 
 ## Docker Deployment
 
-### Using Docker
+### Docker
+
+#### Use Pre-built Image
+
+You can pull the pre-built Docker image from GitHub Container Registry:
+
+```bash
+# Pull the latest image
+docker pull ghcr.io/valentinkolb/bad-words:latest
+
+# Run the image
+docker run -p 8000:8000 ghcr.io/valentinkolb/bad-words:latest
+```
+
+#### Build and Run
 
 ```bash
 # Build the image
@@ -183,7 +197,7 @@ docker run -p 8000:8000 \
   bad-words-api
 ```
 
-### Using Docker Compose
+#### Using Docker Compose
 
 ```bash
 # Set up and start the API with Docker Compose

@@ -1,6 +1,6 @@
 services:
   api:
-    image: bad-words-api
+    image: ghcr.io/valentinkolb/bad-words
     ports:
       - "8000:8000"
     volumes:
