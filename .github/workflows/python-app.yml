@@ -1,23 +1,38 @@
+# Python Application Workflow
+#
+# This workflow:
+# - Validates and updates lockfile
+# - Runs linting and formatting checks
+# - Runs tests on multiple Python versions
+# - Builds and pushes Docker images with appropriate tags
+# - Creates GitHub releases when version tags are pushed
+#
+# Images are tagged as follows:
+# - For main branch pushes: Only the 'latest' tag
+# - For version tag pushes: Both 'latest' and version number tags
+
 name: Python Application
 
 on:
   push:
     branches: [ "main" ]
     tags:
-      - 'v*'
+      - 'v*'  # Trigger on any tag starting with 'v'
   pull_request:
     branches: [ "main" ]
 
 permissions:
-  contents: write
-  packages: write
+  contents: write  # Required for creating GitHub releases
+  packages: write  # Required for pushing to GitHub Container Registry
 
 env:
-  PYTHONUNBUFFERED: 1
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  PYTHONUNBUFFERED: 1  # Ensure Python output is not buffered
+  REGISTRY: ghcr.io   # GitHub Container Registry
+  # Convert repository name to lowercase for ghcr.io compatibility
+  IMAGE_NAME: ${{ lower(github.repository) }}
 
 jobs:
+  # Job to manage Python dependency lockfile
   lock_file:
     runs-on: ubuntu-latest
     steps:
@@ -26,28 +41,30 @@ jobs:
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
-      - run: uv lock
+      - run: uv lock  # Update the lockfile
 
+  # Job to run code quality checks
   lint:
     runs-on: ubuntu-latest
     needs: [lock_file]
     steps:
     - uses: actions/checkout@v4
-    - uses: ./.github/actions/setup
+    - uses: ./.github/actions/setup  # Custom setup action
 
     - name: Run linting and formatting checks
       shell: bash
       run: |
         source .venv/bin/activate
-        ruff check .
-        ruff format --check .
+        ruff check .      # Run linter
+        ruff format --check .  # Check code formatting
 
+  # Job to run tests on multiple Python versions
   test:
     runs-on: ubuntu-latest
     needs: [lock_file]
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.13"]
+        python-version: ["3.9", "3.10", "3.11", "3.13"]  # Test on multiple Python versions
 
     steps:
     - uses: actions/checkout@v4
@@ -59,11 +76,12 @@ jobs:
       shell: bash
       run: |
         source .venv/bin/activate
-        pytest --cov=src
+        pytest --cov=src  # Run tests with coverage
 
+  # Job to build and push Docker images
   build-and-push:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: [lint, test]  # Only run after lint and test jobs pass
     # Skip on pull requests, only run on push to main or tags
     if: github.event_name != 'pull_request'
     steps:
@@ -82,10 +100,16 @@ jobs:
     - name: Set Docker Tags
       id: set-tags
       run: |
+        # Fallback: Convert repository name to lowercase
+        REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+        
+        # Set different tags based on the event type
         if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          # For tag pushes: both 'latest' and version number (without 'v' prefix)
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "DOCKER_TAGS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}" >> $GITHUB_ENV
         else
+          # For main branch pushes: only 'latest'
           echo "DOCKER_TAGS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
         fi
 
@@ -95,18 +119,20 @@ jobs:
         context: .
         push: true
         tags: ${{ env.DOCKER_TAGS }}
-        cache-from: type=gha
+        cache-from: type=gha  # Use GitHub Actions cache
         cache-to: type=gha,mode=max
 
+  # Job to create GitHub releases for version tags
   create-release:
     runs-on: ubuntu-latest
-    needs: [build-and-push]
+    needs: [build-and-push]  # Only run after Docker image is built
+    # Only run when a tag is pushed
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0  # Fetch all history for proper versioning
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -117,16 +143,16 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install build
-          python -m build
+          python -m build  # Build source and wheel distributions
 
       - name: Create Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}  # Use tag name as release name
           draft: false
           prerelease: false
-          files: |
+          files: |  # Include built Python packages as release assets
             dist/*.whl
             dist/*.tar.gz
         env:
