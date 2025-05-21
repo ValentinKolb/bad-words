@@ -28,8 +28,6 @@ permissions:
 env:
   PYTHONUNBUFFERED: 1  # Ensure Python output is not buffered
   REGISTRY: ghcr.io   # GitHub Container Registry
-  # Convert repository name to lowercase for ghcr.io compatibility
-  IMAGE_NAME: ${{ lower(github.repository) }}
 
 jobs:
   # Job to manage Python dependency lockfile
@@ -100,17 +98,14 @@ jobs:
     - name: Set Docker Tags
       id: set-tags
       run: |
-        # Fallback: Convert repository name to lowercase
-        REPO_LOWERCASE=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-        
         # Set different tags based on the event type
         if [[ $GITHUB_REF == refs/tags/v* ]]; then
           # For tag pushes: both 'latest' and version number (without 'v' prefix)
           VERSION=${GITHUB_REF#refs/tags/v}
-          echo "DOCKER_TAGS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest,${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${VERSION}" >> $GITHUB_ENV
+          echo "DOCKER_TAGS=ghcr.io/valentinkolb/bad-words:latest,ghcr.io/valentinkolb/bad-words:${VERSION}" >> $GITHUB_ENV
         else
-          # For main branch pushes: only 'latest'
-          echo "DOCKER_TAGS=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_ENV
+          # For main branch pushes
+          echo "DOCKER_TAGS=ghcr.io/valentinkolb/bad-words:pre-release" >> $GITHUB_ENV
         fi
 
     - name: Build and push Docker image
